@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة الفرق الملونة</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            transition: background-color 0.5s ease;
+        }
+        .start-screen {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .game-mode-button {
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .game-mode-button:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+        .team-background-red { background: linear-gradient(135deg, rgba(220, 38, 38, 0.35), rgba(185, 28, 28, 0.25)); }
+        .team-background-blue { background: linear-gradient(135deg, rgba(37, 99, 235, 0.35), rgba(29, 78, 216, 0.25)); }
+        .team-background-green { background: linear-gradient(135deg, rgba(22, 163, 74, 0.35), rgba(21, 128, 61, 0.25)); }
+        .team-background-yellow { background: linear-gradient(135deg, rgba(202, 138, 4, 0.35), rgba(161, 98, 7, 0.25)); }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 2px;
+        }
+        .square {
+            aspect-ratio: 1;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .square:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .team-button {
+            transition: all 0.3s ease;
+        }
+        .team-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .team-button.selected {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+        }
+        .center-square {
+            border: 3px solid gold !important;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        .protected-square {
+            cursor: not-allowed !important;
+            opacity: 0.7;
+        }
+        .link-box {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: monospace;
+            word-break: break-all;
+            font-size: 14px;
+            cursor: pointer;
+            user-select: all;
+            transition: all 0.3s ease;
+        }
+        .link-box:hover {
+            background: #e9ecef;
+            border-color: #007bff;
+        }
+        .link-box:focus {
+            outline: 2px solid #007bff;
+            background: #e3f2fd;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+    <!-- صفحة البداية -->
+    <div id="start-screen" class="start-screen flex items-center justify-center p-4">
+        <div class="text-center">
+            <div class="bg-white/10 backdrop-blur-lg rounded-3xl p-12 shadow-2xl border border-white/20">
+                <h1 class="text-6xl font-bold text-white mb-4">🎮</h1>
+                <h2 class="text-4xl font-bold text-white mb-8">لعبة الفرق الملونة</h2>
+                <p class="text-xl text-white/80 mb-12 max-w-md mx-auto">اختر نمط اللعب المفضل لديك وابدأ المتعة!</p>
+                
+                <div class="space-y-6">
+                    <button onclick="startSinglePlayer()" class="game-mode-button w-full text-white font-bold py-6 px-12 rounded-2xl text-2xl shadow-lg border-0">
+                        🎯 فردي
+                    </button>
+                    
+                    <button onclick="showPrivateOptions()" class="game-mode-button w-full text-white font-bold py-6 px-12 rounded-2xl text-2xl shadow-lg border-0" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);">
+                        🔗 متعدد الأجهزة
+                    </button>
+                    
+                    <div class="text-white/60 text-sm">
+                        اختر النمط المناسب لك وابدأ اللعب!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- صفحة خيارات النظام الخاص -->
+    <div id="private-options-screen" class="hidden start-screen flex items-center justify-center p-4">
+        <div class="text-center">
+            <div class="bg-white/10 backdrop-blur-lg rounded-3xl p-12 shadow-2xl border border-white/20">
+                <h1 class="text-4xl font-bold text-white mb-8">🔐 النظام الخاص</h1>
+                <p class="text-xl text-white/80 mb-12">اختر دورك في اللعبة</p>
+                
+                <div class="space-y-6">
+                    <button onclick="startAdmin()" id="admin-option-btn" class="game-mode-button w-full text-white font-bold py-6 px-12 rounded-2xl text-2xl shadow-lg border-0" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);">
+                        👑 رئيس
+                    </button>
+                    
+                    <button onclick="startSupervisor()" class="game-mode-button w-full text-white font-bold py-6 px-12 rounded-2xl text-2xl shadow-lg border-0" style="background: linear-gradient(135deg, #a55eea 0%, #8b5cf6 100%);">
+                        🎖️ مشرفين
+                    </button>
+                    
+                    <button onclick="startContestants()" class="game-mode-button w-full text-white font-bold py-6 px-12 rounded-2xl text-2xl shadow-lg border-0" style="background: linear-gradient(135deg, #26de81 0%, #20bf6b 100%);">
+                        🏆 متسابقين
+                    </button>
+                    
+                    <button onclick="goBack()" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-xl text-lg transition-all duration-300">
+                        ← العودة
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- صفحة اللعبة الفردية -->
+    <div id="single-game-screen" class="hidden max-w-6xl mx-auto">
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-4xl font-bold text-gray-800">🎯 اللعبة الفردية</h1>
+            <button onclick="goBack()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300">
+                ← العودة
+            </button>
+        </div>
+        
+        <div class="flex flex-col lg:flex-row gap-8">
+            <div class="lg:w-1/3 space-y-6">
+                <div class="bg-white rounded-xl p-6 shadow-lg border">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">اختر فريقك</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center">
+                            <button onclick="selectSingleTeam('red')" id="single-team-red" class="team-button w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-4 rounded-xl mb-2">
+                                <span id="single-display-name-red">فريق أحمر</span>
+                            </button>
+                            <input type="text" id="single-name-red" placeholder="اسم الفريق" class="w-full p-2 border rounded text-center text-sm" maxlength="15" onchange="updateSingleTeamName('red')">
+                            <div id="single-count-red" class="text-sm mt-1 font-semibold text-red-600">0 مربع</div>
+                        </div>
+                        <div class="text-center">
+                            <button onclick="selectSingleTeam('blue')" id="single-team-blue" class="team-button w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-4 rounded-xl mb-2">
+                                <span id="single-display-name-blue">فريق أزرق</span>
+                            </button>
+                            <input type="text" id="single-name-blue" placeholder="اسم الفريق" class="w-full p-2 border rounded text-center text-sm" maxlength="15" onchange="updateSingleTeamName('blue')">
+                            <div id="single-count-blue" class="text-sm mt-1 font-semibold text-blue-600">0 مربع</div>
+                        </div>
+                        <div class="text-center">
+                            <button onclick="selectSingleTeam('green')" id="single-team-green" class="team-button w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-4 rounded-xl mb-2">
+                                <span id="single-display-name-green">فريق أخضر</span>
+                            </button>
+                            <input type="text" id="single-name-green" placeholder="اسم الفريق" class="w-full p-2 border rounded text-center text-sm" maxlength="15" onchange="updateSingleTeamName('green')">
+                            <div id="single-count-green" class="text-sm mt-1 font-semibold text-green-600">0 مربع</div>
+                        </div>
+                        <div class="text-center">
+                            <button onclick="selectSingleTeam('yellow')" id="single-team-yellow" class="team-button w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-4 px-4 rounded-xl mb-2">
+                                <span id="single-display-name-yellow">فريق أصفر</span>
+                            </button>
+                            <input type="text" id="single-name-yellow" placeholder="اسم الفريق" class="w-full p-2 border rounded text-center text-sm" maxlength="15" onchange="updateSingleTeamName('yellow')">
+                            <div id="single-count-yellow" class="text-sm mt-1 font-semibold text-yellow-600">0 مربع</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-6 shadow-lg border">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">التحكم</h3>
+                    <div class="space-y-3">
+                        <button onclick="undoSingleMove()" id="single-undo-btn" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                            ↶ تراجع عن الحركة الأخيرة
+                        </button>
+                        <button onclick="newSingleGame()" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300">
+                            🎮 لعبة جديدة
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-6 shadow-lg border">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">معلومات</h3>
+                    <div class="text-gray-700 text-sm space-y-2">
+                        <p>• اختر فريقاً ثم اضغط على أي مربع</p>
+                        <p>• سيتم تلوين المربعات على شكل + (3-5 مربعات)</p>
+                        <p>• المربع المركزي (الذي ضغطت عليه) محمي</p>
+                        <p>• الهدف: احصل على أكبر عدد من المربعات</p>
+                        <div class="mt-4 p-3 bg-gray-100 rounded-lg">
+                            <p id="single-selected-team" class="font-bold text-center">لم يتم اختيار فريق</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:w-2/3">
+                <div class="bg-white rounded-xl p-6 shadow-lg border">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">منطقة اللعب - 100 مربع</h2>
+                    <div id="single-game-grid" class="grid-container bg-gray-200 p-4 rounded-xl">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- صفحة الرئيس -->
+    <div id="admin-screen" class="hidden max-w-6xl mx-auto">
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-4xl font-bold text-gray-800">👑 لوحة تحكم الرئيس</h1>
+            <button onclick="goBack()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300">
+                ← العودة
+            </button>
+        </div>
+        
+        <!-- رابط الجلسة -->
+        <div class="bg-green-50 border-2 border-green-300 rounded-xl p-6 shadow-lg mb-8">
+            <h2 class="text-2xl font-bold text-green-800 mb-4 text-center">🔗 رابط الجلسة</h2>
+            <p class="text-center text-green-700 mb-4">شارك هذا الرابط مع المشرفين والمتسابقين للانضمام للعبة</p>
+            
+            <div class="flex gap-3 items-center">
+                <div id="session-link" class="link-box flex-1 text-gray-700" onclick="selectLinkText()" tabindex="0" title="اضغط لتحديد الرابط">
+                    جاري إنشاء الرابط...
+                </div>
+                <button onclick="copySessionLink()" id="copy-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 whitespace-nowrap">
+                    📋 نسخ
+                </button>
+            </div>
+            
+            <div id="copy-success" class="text-green-600 text-center mt-3 hidden">
+                ✅ تم نسخ الرابط بنجاح!
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl p-6 shadow-lg border mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">إعداد أكواد الفرق</h2>
+            
+            <div class="grid grid-cols-2 gap-6">
+                <div class="text-center">
+                    <label class="block text-lg font-bold text-red-600 mb-2">كود الفريق الأحمر</label>
+                    <input type="text" id="admin-code-red" placeholder="أدخل كود الفريق الأحمر" class="w-full p-3 border-2 border-red-300 rounded-lg text-center text-lg" maxlength="10">
+                </div>
+                <div class="text-center">
+                    <label class="block text-lg font-bold text-blue-600 mb-2">كود الفريق الأزرق</label>
+                    <input type="text" id="admin-code-blue" placeholder="أدخل كود الفريق الأزرق" class="w-full p-3 border-2 border-blue-300 rounded-lg text-center text-lg" maxlength="10">
+                </div>
+                <div class="text-center">
+                    <label class="block text-lg font-bold text-green-600 mb-2">كود الفريق الأخضر</label>
+                    <input type="text" id="admin-code-green" placeholder="أدخل كود الفريق الأخضر" class="w-full p-3 border-2 border-green-300 rounded-lg text-center text-lg" maxlength="10">
+                </div>
+                <div class="text-center">
+                    <label class="block text-lg font-bold text-yellow-600 mb-2">كود الفريق الأصفر</label>
+                    <input type="text" id="admin-code-yellow" placeholder="أدخل كود الفريق الأصفر" class="w-full p-3 border-2 border-yellow-300 rounded-lg text-center text-lg" maxlength="10">
+                </div>
+            </div>
+            <div class="text-center mt-6">
+                <button onclick="saveTeamCodes()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl text-lg transition-all duration-300">
+                    💾 حفظ أكواد الفرق
+                </button>
+            </div>
+        </div>
+        
+        <div class="flex flex-col lg:flex-row gap-8">
+            <div class="lg:w-1/3 space-y-6">
+                <div class="bg-white rounded-xl p-6 shadow-lg border">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">اختر فريقك</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center">
+                            <button onclick="selectTeam('red')" id="admin-team-red" class="team-button w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-4 rounded-xl mb-2">
+                                <span id="admin-display-name-red">فريق أحمر</span>
+                            </button>
+                            <input type="text" id="admin-name-red" placeholder="اسم الفريق" class="w-full p-2 border rounded text-center text-sm" maxlength="15" onchange="updateAdminTeamName('red')">
+                            <div id="admin-count-red" class="text-sm mt-1 font-semibold text-red-600">0 مربع</div>
+                        </div>
+                        <div class="text-center">
+                            <button onclick="selectTeam('blue')" id="admin-team-blue" class="team-button w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-4 rounded-xl mb-2">
+                                <span id="admin-display-name-blue">فريق أزرق</span>
+                            </button>
+                            <input type="text" id="admin-name-blue" placeholder="اسم الفريق" class="w-full p-2 border rounded text-center text-sm" maxlength="15" onchange="updateAdminTeamName('blue')">
+                            <div id="admin-count-blue" class="text-sm mt-1 font-semibold text-blue-600">0 مربع</div>
+                        </div>
+                        <div class="text-center">
+                            <button onclick="selectTeam('green')" id="admin-team-green" class="team-button w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-4 rounded-xl mb-2">
+                                <span id="admin-display-name-green">فريق أخضر</span>
+                            </button>
+                            <input type="text" id="admin-name-green" placeholder="اسم الفريق" class="w-full p-2 border rounded text-center text-sm" maxlength="15" onchange="updateAdminTeamName('green')">
+                            <div id="admin-count-green" class="text-sm mt-1 font-semibold text-green-600">0 مربع</div>
+                        </div>
+                        <div class="text-center">
+                            <button onclick="selectTeam('yellow')" id="admin-team-yellow" class="team-button w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-4 px-4 rounded-xl mb-2">
+                                <span id="admin-display-name-yellow">فريق أصفر</span>
+                            </button>
+                            <input type="text" id="admin-name-yellow" placeholder="اسم الفريق" class="w-full p-2 border rounded text-center text-sm" maxlength="15" onchange="updateAdminTeamName('yellow')">
+                            <div id="admin-count-yellow" class="text-sm mt-1 font-semibold text-yellow-600">0 مربع</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-6 shadow-lg border">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">التحكم</h3>
+                    <div class="space-y-3">
+                        <button onclick="undoLastMove()" id="admin-undo-btn" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                            ↶ تراجع عن الحركة الأخيرة
+                        </button>
+                        <button onclick="newGame()" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300">
+                            🎮 لعبة جديدة
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-6 shadow-lg border">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">معلومات</h3>
+                    <div class="text-gray-700 text-sm space-y-2">
+                        <p>• اختر فريقاً ثم اضغط على أي مربع</p>
+                        <p>• سيتم تلوين المربعات على شكل + (3-5 مربعات)</p>
+                        <p>• المربع المركزي (الذي ضغطت عليه) محمي</p>
+                        <p>• الهدف: احصل على أكبر عدد من المربعات</p>
+                        <div class="mt-4 p-3 bg-gray-100 rounded-lg">
+                            <p id="admin-selected-team" class="font-bold text-center">لم يتم اختيار فريق</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:w-2/3">
+                <div class="bg-white rounded-xl p-6 shadow-lg border">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">منطقة اللعب - 100 مربع</h2>
+                    <div id="admin-game-grid" class="grid-container bg-gray-200 p-4 rounded-xl">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- صفحة المشرفين -->
+    <div id="supervisor-screen" class="hidden max-w-6xl mx-auto">
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-4xl font-bold text-gray-800">🎖️ لوحة المشرفين</h1>
+            <button onclick="goBack()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300">
+                ← العودة
+            </button>
+        </div>
+        
+        <div class="flex flex-col lg:flex-row gap-8">
+            <div class="lg:w-1/3 space-y-6">
+                <div class="bg-white rounded-xl p-6 shadow-lg border">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">تعديل نقاط الفرق</h2>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div class="p-4 bg-red-50 rounded-lg border-2 border-red-200">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="font-bold text-red-600 text-lg">فريق أحمر</span>
+                                <span id="supervisor-display-red" class="font-bold text-red-700">0 مربع</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="points-red" placeholder="النقاط" class="w-20 p-2 border rounded text-center" min="1">
+                                <button onclick="addPoints('red')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded text-sm font-bold">+ زيادة</button>
+                                <button onclick="subtractPoints('red')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-sm font-bold">- خصم</button>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="font-bold text-blue-600 text-lg">فريق أزرق</span>
+                                <span id="supervisor-display-blue" class="font-bold text-blue-700">0 مربع</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="points-blue" placeholder="النقاط" class="w-20 p-2 border rounded text-center" min="1">
+                                <button onclick="addPoints('blue')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded text-sm font-bold">+ زيادة</button>
+                                <button onclick="subtractPoints('blue')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-sm font-bold">- خصم</button>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 bg-green-50 rounded-lg border-2 border-green-200">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="font-bold text-green-600 text-lg">فريق أخضر</span>
+                                <span id="supervisor-display-green" class="font-bold text-green-700">0 مربع</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="points-green" placeholder="النقاط" class="w-20 p-2 border rounded text-center" min="1">
+                                <button onclick="addPoints('green')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded text-sm font-bold">+ زيادة</button>
+                                <button onclick="subtractPoints('green')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-sm font-bold">- خصم</button>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 bg-yellow-50 rounded-lg border-2 border-yellow-200">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="font-bold text-yellow-600 text-lg">فريق أصفر</span>
+                                <span id="supervisor-display-yellow" class="font-bold text-yellow-700">0 مربع</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="points-yellow" placeholder="النقاط" class="w-20 p-2 border rounded text-center" min="1">
+                                <button onclick="addPoints('yellow')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded text-sm font-bold">+ زيادة</button>
+                                <button onclick="subtractPoints('yellow')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded text-sm font-bold">- خصم</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-6 shadow-lg border">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">النقاط النهائية</h3>
+                    <div class="space-y-2">
+                        <div id="supervisor-count-red" class="text-lg font-semibold text-red-600 p-3 bg-red-50 rounded-lg border">فريق أحمر: 0 مربع</div>
+                        <div id="supervisor-count-blue" class="text-lg font-semibold text-blue-600 p-3 bg-blue-50 rounded-lg border">فريق أزرق: 0 مربع</div>
+                        <div id="supervisor-count-green" class="text-lg font-semibold text-green-600 p-3 bg-green-50 rounded-lg border">فريق أخضر: 0 مربع</div>
+                        <div id="supervisor-count-yellow" class="text-lg font-semibold text-yellow-600 p-3 bg-yellow-50 rounded-lg border">فريق أصفر: 0 مربع</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:w-2/3">
+                <div class="bg-white rounded-xl p-6 shadow-lg border">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">مراقبة اللعبة - 100 مربع</h2>
+                    <div id="supervisor-game-grid" class="grid-container bg-gray-200 p-4 rounded-xl">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- صفحة المتسابقين -->
+    <div id="contestants-screen" class="hidden max-w-6xl mx-auto">
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-4xl font-bold text-gray-800">🏆 صفحة المتسابقين</h1>
+            <button onclick="goBack()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300">
+                ← العودة
+            </button>
+        </div>
+        
+        <!-- صفحة إدخال الكود -->
+        <div id="code-entry" class="bg-white rounded-xl p-8 shadow-lg border text-center">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">أدخل كود فريقك</h2>
+            <div class="max-w-md mx-auto">
+                <input type="text" id="team-code-input" placeholder="أدخل كود الفريق" class="w-full p-4 border-2 border-gray-300 rounded-lg text-center text-xl mb-4" maxlength="10">
+                <button onclick="verifyTeamCode()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl text-xl transition-all duration-300">
+                    ✅ تأكيد الكود
+                </button>
+                <div id="code-error" class="text-red-600 mt-4 hidden">كود غير صحيح! يرجى المحاولة مرة أخرى.</div>
+            </div>
+        </div>
+        
+        <!-- صفحة اللعب للمتسابق -->
+        <div id="contestant-game" class="hidden">
+            <div class="bg-white rounded-xl p-6 shadow-lg border mb-6">
+                <h2 class="text-2xl font-bold text-center" id="contestant-team-info">مرحباً بك في فريقك!</h2>
+            </div>
+            
+            <div class="flex flex-col lg:flex-row gap-8">
+                <div class="lg:w-1/3 space-y-6">
+                    <div class="bg-white rounded-xl p-6 shadow-lg border">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">فريقك</h3>
+                        <div id="contestant-team-button" class="text-center mb-4">
+                        </div>
+                        <div id="contestant-team-count" class="text-lg font-semibold text-center">0 مربع</div>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-6 shadow-lg border">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">معلومات</h3>
+                        <div class="text-gray-700 text-sm space-y-2">
+                            <p>• اضغط على أي مربع لتلوينه</p>
+                            <p>• سيتم تلوين المربعات على شكل + (3-5 مربعات)</p>
+                            <p>• المربع المركزي محمي</p>
+                            <p>• يمكنك فقط التحكم بفريقك</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:w-2/3">
+                    <div class="bg-white rounded-xl p-6 shadow-lg border">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">منطقة اللعب - 100 مربع</h2>
+                        <div id="contestant-game-grid" class="grid-container bg-gray-200 p-4 rounded-xl">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // متغيرات النظام العامة
+        let gameMode = 'single';
+        let sessionId = '';
+        let navigationHistory = [];
+        
+        // متغيرات اللعبة الفردية (منفصلة تماماً)
+        let singleSelectedTeam = null;
+        let singleGameHistory = [];
+        let singleSquares = [];
+        let singleTeamCounts = { red: 0, blue: 0, green: 0, yellow: 0 };
+        let singleProtectedSquares = [];
+
+        // متغيرات النظام الخاص (مشتركة بين جميع الأجهزة)
+        let selectedTeam = null;
+        let gameHistory = [];
+        let squares = [];
+        let teamCounts = { red: 0, blue: 0, green: 0, yellow: 0 };
+        let teamCodes = { red: '', blue: '', green: '', yellow: '' };
+        let contestantTeam = null;
+        let bonusPoints = { red: 0, blue: 0, green: 0, yellow: 0 };
+        let protectedSquares = [];
+        let lastSyncTime = 0;
+
+        const teamColors = {
+            red: 'bg-red-600',
+            blue: 'bg-blue-600', 
+            green: 'bg-green-600',
+            yellow: 'bg-yellow-600'
+        };
+
+        // التحقق من وجود رابط في الـ URL عند تحميل الصفحة
+        window.addEventListener('load', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlSessionId = urlParams.get('session');
+            
+            if (urlSessionId) {
+                // إذا كان هناك رابط، اذهب مباشرة لصفحة الخيارات
+                sessionId = urlSessionId;
+                localStorage.setItem('currentSessionId', sessionId);
+                hideAllScreens();
+                document.getElementById('private-options-screen').classList.remove('hidden');
+                hideAdminOption();
+            }
+        });
+
+        // وظائف التنقل الأساسية
+        function addToNavigationHistory(screenId) {
+            navigationHistory.push(screenId);
+        }
+
+        function showPrivateOptions() {
+            addToNavigationHistory('start-screen');
+            hideAllScreens();
+            
+            // التحقق من وجود رابط في الـ URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlSessionId = urlParams.get('session');
+            
+            if (urlSessionId) {
+                // إذا كان هناك رابط، اعرض خيارات المشرفين والمتسابقين فقط
+                sessionId = urlSessionId;
+                localStorage.setItem('currentSessionId', sessionId);
+                document.getElementById('private-options-screen').classList.remove('hidden');
+                hideAdminOption();
+            } else {
+                // إذا لم يكن هناك رابط، اذهب مباشرة للرئيس
+                startAdmin();
+            }
+        }
+        
+        function hideAdminOption() {
+            const adminButton = document.getElementById('admin-option-btn');
+            if (adminButton) {
+                adminButton.style.display = 'none';
+            }
+        }
+
+        function startSinglePlayer() {
+            addToNavigationHistory('start-screen');
+            gameMode = 'single';
+            hideAllScreens();
+            document.getElementById('single-game-screen').classList.remove('hidden');
+            document.body.className = 'bg-gray-100 min-h-screen p-4';
+            createSingleGrid();
+        }
+
+        function startAdmin() {
+            // إنشاء رابط جديد في كل مرة
+            sessionId = generateSessionId();
+            localStorage.setItem('currentSessionId', sessionId);
+            
+            // تحديد التاريخ الصحيح للعودة
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('session')) {
+                addToNavigationHistory('private-options-screen');
+            } else {
+                addToNavigationHistory('start-screen');
+            }
+            
+            gameMode = 'admin';
+            hideAllScreens();
+            document.getElementById('admin-screen').classList.remove('hidden');
+            document.body.className = 'bg-gray-100 min-h-screen p-4';
+            createAdminGrid();
+            syncGameData();
+            loadAdminSettings();
+            generateSessionLink();
+        }
+        
+        function startSupervisor() {
+            addToNavigationHistory('private-options-screen');
+            gameMode = 'supervisor';
+            hideAllScreens();
+            document.getElementById('supervisor-screen').classList.remove('hidden');
+            document.body.className = 'bg-gray-100 min-h-screen p-4';
+            createSupervisorGrid();
+            syncGameData();
+            updateSupervisorCounters();
+        }
+        
+        function startContestants() {
+            addToNavigationHistory('private-options-screen');
+            gameMode = 'contestant';
+            hideAllScreens();
+            document.getElementById('contestants-screen').classList.remove('hidden');
+            document.getElementById('code-entry').classList.remove('hidden');
+            document.getElementById('contestant-game').classList.add('hidden');
+            document.body.className = 'bg-gray-100 min-h-screen p-4';
+            syncGameData();
+        }
+
+        function hideAllScreens() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('private-options-screen').classList.add('hidden');
+            document.getElementById('single-game-screen').classList.add('hidden');
+            document.getElementById('admin-screen').classList.add('hidden');
+            document.getElementById('supervisor-screen').classList.add('hidden');
+            document.getElementById('contestants-screen').classList.add('hidden');
+        }
+
+        function goBack() {
+            if (navigationHistory.length > 0) {
+                const previousScreen = navigationHistory.pop();
+                hideAllScreens();
+                document.getElementById(previousScreen).classList.remove('hidden');
+                
+                if (previousScreen === 'start-screen') {
+                    document.body.className = 'bg-gray-100 min-h-screen p-4';
+                    gameMode = 'single';
+                    contestantTeam = null;
+                } else if (previousScreen === 'contestants-screen') {
+                    document.getElementById('code-entry').classList.remove('hidden');
+                    document.getElementById('contestant-game').classList.add('hidden');
+                }
+            } else {
+                backToStart();
+            }
+        }
+
+        function backToStart() {
+            navigationHistory = [];
+            hideAllScreens();
+            document.getElementById('start-screen').classList.remove('hidden');
+            document.body.className = 'bg-gray-100 min-h-screen p-4';
+            
+            gameMode = 'single';
+            contestantTeam = null;
+        }
+
+        // وظائف إنشاء ونسخ الرابط
+        function generateSessionId() {
+            const timestamp = Date.now().toString(36);
+            const randomPart1 = Math.random().toString(36).substr(2, 6);
+            const randomPart2 = Math.random().toString(36).substr(2, 6);
+            const uniqueId = Math.floor(Math.random() * 1000000).toString(36);
+            return `game_${timestamp}_${randomPart1}_${randomPart2}_${uniqueId}`;
+        }
+
+        function generateSessionLink() {
+            if (!sessionId) {
+                sessionId = generateSessionId();
+                localStorage.setItem('currentSessionId', sessionId);
+            }
+            
+            const currentUrl = window.location.href.split('?')[0];
+            const sessionLink = `${currentUrl}?session=${sessionId}`;
+            
+            document.getElementById('session-link').textContent = sessionLink;
+        }
+
+        function copySessionLink() {
+            const linkElement = document.getElementById('session-link');
+            const link = linkElement.textContent.trim();
+            
+            // تحديد النص أولاً
+            if (window.getSelection) {
+                const selection = window.getSelection();
+                const range = document.createRange();
+                range.selectNodeContents(linkElement);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+            
+            // نسخ الرابط
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(link).then(() => {
+                    showCopySuccess();
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(link);
+                });
+            } else {
+                fallbackCopyTextToClipboard(link);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopySuccess();
+                } else {
+                    alert('فشل في نسخ الرابط. يرجى نسخه يدوياً.');
+                }
+            } catch (err) {
+                alert('فشل في نسخ الرابط. يرجى نسخه يدوياً.');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        function showCopySuccess() {
+            const successMsg = document.getElementById('copy-success');
+            successMsg.classList.remove('hidden');
+            
+            const copyBtn = document.getElementById('copy-btn');
+            copyBtn.textContent = '✅ تم النسخ';
+            copyBtn.classList.add('bg-green-600');
+            copyBtn.classList.remove('bg-blue-600');
+            
+            setTimeout(() => {
+                successMsg.classList.add('hidden');
+                copyBtn.textContent = '📋 نسخ';
+                copyBtn.classList.remove('bg-green-600');
+                copyBtn.classList.add('bg-blue-600');
+            }, 3000);
+        }
+
+        function selectLinkText() {
+            const linkElement = document.getElementById('session-link');
+            if (window.getSelection) {
+                const selection = window.getSelection();
+                const range = document.createRange();
+                range.selectNodeContents(linkElement);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        }
+
+        // === وظائف اللعبة الفردية (منفصلة تماماً) ===
+        function createSingleGrid() {
+            const grid = document.getElementById('single-game-grid');
+            grid.innerHTML = '';
+            singleSquares = [];
+            
+            for (let i = 1; i <= 100; i++) {
+                const square = document.createElement('div');
+                const index = i - 1;
+                
+                square.className = 'square bg-gray-600 border border-gray-500 rounded-lg flex items-center justify-center text-white font-bold text-sm hover:bg-gray-500';
+                square.textContent = i;
+                square.onclick = () => playSingleMove(index);
+                singleSquares.push({ element: square, team: null, number: i, isCenterSquare: false });
+                
+                grid.appendChild(square);
+            }
+            
+            updateSingleCounters();
+        }
+
+        function selectSingleTeam(team) {
+            document.querySelectorAll('#single-game-screen .team-button').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            document.body.classList.remove('team-background-red', 'team-background-blue', 'team-background-green', 'team-background-yellow');
+            
+            singleSelectedTeam = team;
+            document.getElementById(`single-team-${team}`).classList.add('selected');
+            document.body.classList.add(`team-background-${team}`);
+            
+            const teamName = document.getElementById(`single-name-${team}`).value || getTeamDisplayName(team);
+            document.getElementById('single-selected-team').textContent = `الفريق المختار: ${teamName}`;
+        }
+
+        function updateSingleTeamName(team) {
+            const input = document.getElementById(`single-name-${team}`);
+            const displayName = document.getElementById(`single-display-name-${team}`);
+            
+            if (input.value.trim()) {
+                displayName.textContent = input.value.trim();
+            } else {
+                displayName.textContent = getTeamDisplayName(team);
+            }
+            
+            updateSingleCounters();
+            
+            if (singleSelectedTeam === team) {
+                const teamName = input.value.trim() || getTeamDisplayName(team);
+                document.getElementById('single-selected-team').textContent = `الفريق المختار: ${teamName}`;
+            }
+        }
+
+        function playSingleMove(squareIndex) {
+            if (!singleSelectedTeam) {
+                alert('يرجى اختيار فريق أولاً!');
+                return;
+            }
+
+            const selectedSquares = getAdjacentSquares(squareIndex);
+            const hasProtectedSquare = selectedSquares.some(idx => {
+                const square = singleSquares[idx];
+                return square.isCenterSquare && square.team !== singleSelectedTeam && square.team !== null;
+            });
+
+            if (hasProtectedSquare) {
+                alert('لا يمكنك تلوين المربع المركزي للفرق الأخرى!');
+                return;
+            }
+
+            const currentState = singleSquares.map(sq => ({ ...sq }));
+            singleGameHistory.push({
+                state: currentState,
+                counts: { ...singleTeamCounts },
+                protectedSquares: [...singleProtectedSquares]
+            });
+
+            const centerSquare = singleSquares[squareIndex];
+            if (!centerSquare.isCenterSquare) {
+                centerSquare.isCenterSquare = true;
+                singleProtectedSquares.push(squareIndex);
+            }
+
+            selectedSquares.forEach(idx => {
+                const square = singleSquares[idx];
+                
+                if (square.isCenterSquare && square.team !== singleSelectedTeam && square.team !== null) {
+                    return;
+                }
+                
+                if (square.team && square.team !== singleSelectedTeam) {
+                    singleTeamCounts[square.team]--;
+                }
+                
+                square.team = singleSelectedTeam;
+                singleTeamCounts[singleSelectedTeam]++;
+                
+                if (idx === squareIndex) {
+                    square.element.className = `square ${teamColors[singleSelectedTeam]} border-4 border-yellow-400 rounded-lg flex items-center justify-center text-white font-bold text-sm center-square`;
+                } else {
+                    square.element.className = `square ${teamColors[singleSelectedTeam]} border border-gray-300 rounded-lg flex items-center justify-center text-white font-bold text-sm hover:brightness-110`;
+                }
+            });
+
+            updateSingleCounters();
+            updateSingleUndoButton();
+        }
+
+        function updateSingleCounters() {
+            Object.keys(singleTeamCounts).forEach(team => {
+                const teamName = document.getElementById(`single-name-${team}`).value.trim() || getTeamDisplayName(team);
+                document.getElementById(`single-count-${team}`).textContent = `${teamName}: ${singleTeamCounts[team]} مربع`;
+            });
+        }
+
+        function updateSingleUndoButton() {
+            const undoBtn = document.getElementById('single-undo-btn');
+            undoBtn.disabled = singleGameHistory.length === 0;
+        }
+
+        function undoSingleMove() {
+            if (singleGameHistory.length === 0) return;
+
+            const lastState = singleGameHistory.pop();
+            
+            singleSquares.forEach((square, index) => {
+                const oldState = lastState.state[index];
+                square.team = oldState.team;
+                square.isCenterSquare = oldState.isCenterSquare;
+                
+                if (oldState.team) {
+                    if (oldState.isCenterSquare) {
+                        square.element.className = `square ${teamColors[oldState.team]} border-4 border-yellow-400 rounded-lg flex items-center justify-center text-white font-bold text-sm center-square`;
+                    } else {
+                        square.element.className = `square ${teamColors[oldState.team]} border border-gray-300 rounded-lg flex items-center justify-center text-white font-bold text-sm hover:brightness-110`;
+                    }
+                } else {
+                    square.element.className = 'square bg-gray-600 border border-gray-500 rounded-lg flex items-center justify-center text-white font-bold text-sm hover:bg-gray-500';
+                }
+            });
+
+            singleTeamCounts = { ...lastState.counts };
+            singleProtectedSquares = [...lastState.protectedSquares];
+            updateSingleCounters();
+            updateSingleUndoButton();
+        }
+
+        function newSingleGame() {
+            singleSelectedTeam = null;
+            singleGameHistory = [];
+            singleTeamCounts = { red: 0, blue: 0, green: 0, yellow: 0 };
+            singleProtectedSquares = [];
+            
+            document.querySelectorAll('#single-game-screen .team-button').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            document.body.classList.remove('team-background-red', 'team-background-blue', 'team-background-green', 'team-background-yellow');
+            
+            Object.keys(singleTeamCounts).forEach(team => {
+                document.getElementById(`single-name-${team}`).value = '';
+                document.getElementById(`single-display-name-${team}`).textContent = getTeamDisplayName(team);
+            });
+            
+            document.getElementById('single-selected-team').textContent = 'لم يتم اختيار فريق';
+            createSingleGrid();
+            updateSingleCounters();
+            updateSingleUndoButton();
+        }
+
+        // === وظائف النظام الخاص (مشتركة) ===
+        
+        // مزامنة البيانات بين الأجهزة
+        function syncGameData() {
+            if (!sessionId) return;
+            
+            const gameDataKey = `game_${sessionId}`;
+            const savedData = localStorage.getItem(gameDataKey);
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                const newSyncTime = data.lastUpdate || 0;
+                
+                if (newSyncTime > lastSyncTime) {
+                    squares = data.squares || [];
+                    teamCounts = data.teamCounts || { red: 0, blue: 0, green: 0, yellow: 0 };
+                    teamCodes = data.teamCodes || { red: '', blue: '', green: '', yellow: '' };
+                    protectedSquares = data.protectedSquares || [];
+                    bonusPoints = data.bonusPoints || { red: 0, blue: 0, green: 0, yellow: 0 };
+                    gameHistory = data.gameHistory || [];
+                    lastSyncTime = newSyncTime;
+                    
+                    if (gameMode === 'supervisor') {
+                        updateSupervisorGrid();
+                        updateSupervisorCounters();
+                    } else if (gameMode === 'contestant' && contestantTeam) {
+                        updateContestantGrid();
+                        updateContestantCounter();
+                    } else if (gameMode === 'admin') {
+                        updateAdminGrid();
+                        updateAdminCounters();
+                    }
+                }
+            }
+        }
+
+        function saveGameData() {
+            if (!sessionId) return;
+            
+            const data = {
+                squares: squares,
+                teamCounts: teamCounts,
+                teamCodes: teamCodes,
+                protectedSquares: protectedSquares,
+                bonusPoints: bonusPoints,
+                gameHistory: gameHistory,
+                lastUpdate: Date.now()
+            };
+            const gameDataKey = `game_${sessionId}`;
+            localStorage.setItem(gameDataKey, JSON.stringify(data));
+            lastSyncTime = data.lastUpdate;
+        }
+
+        function loadAdminSettings() {
+            if (teamCodes.red) document.getElementById('admin-code-red').value = teamCodes.red;
+            if (teamCodes.blue) document.getElementById('admin-code-blue').value = teamCodes.blue;
+            if (teamCodes.green) document.getElementById('admin-code-green').value = teamCodes.green;
+            if (teamCodes.yellow) document.getElementById('admin-code-yellow').value = teamCodes.yellow;
+        }
+
+        function getTeamDisplayName(team) {
+            const names = { red: 'فريق أحمر', blue: 'فريق أزرق', green: 'فريق أخضر', yellow: 'فريق أصفر' };
+            return names[team];
+        }
+
+        function getAdjacentSquares(index) {
+            const row = Math.floor(index / 10);
+            const col = index % 10;
+            const adjacent = [];
+            
+            adjacent.push(index);
+            
+            const directions = [
+                [-1, 0], [1, 0], [0, -1], [0, 1]
+            ];
+            
+            directions.forEach(([dRow, dCol]) => {
+                const newRow = row + dRow;
+                const newCol = col + dCol;
+                
+                if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10) {
+                    const newIndex = newRow * 10 + newCol;
+                    adjacent.push(newIndex);
+                }
+            });
+            
+            return adjacent;
+        }
+
+        // وظائف الرئيس
+        function saveTeamCodes() {
+            teamCodes.red = document.getElementById('admin-code-red').value.trim();
+            teamCodes.blue = document.getElementById('admin-code-blue').value.trim();
+            teamCodes.green = document.getElementById('admin-code-green').value.trim();
+            teamCodes.yellow = document.getElementById('admin-code-yellow').value.trim();
+            
+            if (!teamCodes.red || !teamCodes.blue || !teamCodes.green || !teamCodes.yellow) {
+                alert('يرجى إدخال أكواد لجميع الفرق!');
+                return;
+            }
+            
+            const codes = Object.values(teamCodes);
+            const uniqueCodes = [...new Set(codes)];
+            if (codes.length !== uniqueCodes.length) {
+                alert('يجب أن تكون جميع الأكواد مختلفة!');
+                return;
+            }
+            
+            saveGameData();
+            alert('تم حفظ أكواد الفرق بنجاح! ✅');
+        }
+
+        function createAdminGrid() {
+            const grid = document.getElementById('admin-game-grid');
+            grid.innerHTML = '';
+            
+            if (squares.length === 0) {
+                squares = [];
+                for (let i = 1; i <= 100; i++) {
+                    squares.push({ team: null, number: i, isCenterSquare: false });
+                }
+            }
+            
+            for (let i = 1; i <= 100; i++) {
+                const square = document.createElement('div');
+                const index = i - 1;
+                const squareData = squares[index];
+                
+                if (squareData.team) {
+                    if (squareData.isCenterSquare) {
+                        square.className = `square ${teamColors[squareData.team]} border-4 border-yellow-400 rounded-lg flex items-center justify-center text-white font-bold text-sm center-square`;
+                    } else {
+                        square.className = `square ${teamColors[squareData.team]} border border-gray-300 rounded-lg flex items-center justify-center text-white font-bold text-sm hover:brightness-110`;
+                    }
+                } else {
+                    square.className = 'square bg-gray-600 border border-gray-500 rounded-lg flex items-center justify-center text-white font-bold text-sm hover:bg-gray-500';
+                }
+                
+                square.textContent = i;
+                square.onclick = () => playMove(index);
+                squares[index].element = square;
+                
+                grid.appendChild(square);
+            }
+            
+            updateAdminCounters();
+        }
+
+        function selectTeam(team) {
+            if (gameMode === 'contestant') return;
+            
+            document.querySelectorAll('#admin-screen .team-button').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            document.body.classList.remove('team-background-red', 'team-background-blue', 'team-background-green', 'team-background-yellow');
+            
+            selectedTeam = team;
+            document.getElementById(`admin-team-${team}`).classList.add('selected');
+            document.body.classList.add(`team-background-${team}`);
+            
+            const teamName = document.getElementById(`admin-name-${team}`).value || getTeamDisplayName(team);
+            document.getElementById('admin-selected-team').textContent = `الفريق المختار: ${teamName}`;
+        }
+
+        function updateAdminTeamName(team) {
+            const input = document.getElementById(`admin-name-${team}`);
+            const displayName = document.getElementById(`admin-display-name-${team}`);
+            
+            if (input.value.trim()) {
+                displayName.textContent = input.value.trim();
+            } else {
+                displayName.textContent = getTeamDisplayName(team);
+            }
+            
+            updateAdminCounters();
+            
+            if (selectedTeam === team) {
+                const teamName = input.value.trim() || getTeamDisplayName(team);
+                document.getElementById('admin-selected-team').textContent = `الفريق المختار: ${teamName}`;
+            }
+        }
+
+        function playMove(squareIndex) {
+            if (!selectedTeam) {
+                alert('يرجى اختيار فريق أولاً!');
+                return;
+            }
+
+            const selectedSquares = getAdjacentSquares(squareIndex);
+            const hasProtectedSquare = selectedSquares.some(idx => {
+                const square = squares[idx];
+                return square.isCenterSquare && square.team !== selectedTeam && square.team !== null;
+            });
+
+            if (hasProtectedSquare) {
+                alert('لا يمكنك تلوين المربع المركزي للفرق الأخرى!');
+                return;
+            }
+
+            const currentState = squares.map(sq => ({ ...sq }));
+            gameHistory.push({
+                state: currentState,
+                counts: { ...teamCounts },
+                protectedSquares: [...protectedSquares],
+                bonusPoints: { ...bonusPoints }
+            });
+
+            const centerSquare = squares[squareIndex];
+            if (!centerSquare.isCenterSquare) {
+                centerSquare.isCenterSquare = true;
+                protectedSquares.push(squareIndex);
+            }
+
+            selectedSquares.forEach(idx => {
+                const square = squares[idx];
+                
+                if (square.isCenterSquare && square.team !== selectedTeam && square.team !== null) {
+                    return;
+                }
+                
+                if (square.team && square.team !== selectedTeam) {
+                    teamCounts[square.team]--;
+                }
+                
+                square.team = selectedTeam;
+                teamCounts[selectedTeam]++;
+                
+                if (square.element) {
+                    if (idx === squareIndex) {
+                        square.element.className = `square ${teamColors[selectedTeam]} border-4 border-yellow-400 rounded-lg flex items-center justify-center text-white font-bold text-sm center-square`;
+                    } else {
+                        square.element.className = `square ${teamColors[selectedTeam]} border border-gray-300 rounded-lg flex items-center justify-center text-white font-bold text-sm hover:brightness-110`;
+                    }
+                }
+            });
+
+            updateCounters();
+            updateUndoButton();
+            saveGameData();
+        }
+
+        function updateCounters() {
+            if (gameMode === 'admin') {
+                updateAdminCounters();
+            } else if (gameMode === 'supervisor') {
+                updateSupervisorCounters();
+            } else if (gameMode === 'contestant') {
+                updateContestantCounter();
+            }
+        }
+
+        function updateAdminCounters() {
+            Object.keys(teamCounts).forEach(team => {
+                const teamName = document.getElementById(`admin-name-${team}`).value.trim() || getTeamDisplayName(team);
+                document.getElementById(`admin-count-${team}`).textContent = `${teamName}: ${teamCounts[team]} مربع`;
+            });
+        }
+
+        function updateUndoButton() {
+            const undoBtn = document.getElementById('admin-undo-btn');
+            if (undoBtn) {
+                undoBtn.disabled = gameHistory.length === 0;
+            }
+        }
+
+        function undoLastMove() {
+            if (gameHistory.length === 0) return;
+
+            const lastState = gameHistory.pop();
+            
+            squares.forEach((square, index) => {
+                const oldState = lastState.state[index];
+                square.team = oldState.team;
+                square.isCenterSquare = oldState.isCenterSquare;
+                
+                if (square.element) {
+                    if (oldState.team) {
+                        if (oldState.isCenterSquare) {
+                            square.element.className = `square ${teamColors[oldState.team]} border-4 border-yellow-400 rounded-lg flex items-center justify-center text-white font-bold text-sm center-square`;
+                        } else {
+                            square.element.className = `square ${teamColors[oldState.team]} border border-gray-300 rounded-lg flex items-center justify-center text-white font-bold text-sm hover:brightness-110`;
+                        }
+                    } else {
+                        square.element.className = 'square bg-gray-600 border border-gray-500 rounded-lg flex items-center justify-center text-white font-bold text-sm hover:bg-gray-500';
+                    }
+                }
+            });
+
+            teamCounts = { ...lastState.counts };
+            protectedSquares = [...lastState.protectedSquares];
+            bonusPoints = { ...lastState.bonusPoints };
+            updateCounters();
+            updateUndoButton();
+            saveGameData();
+        }
+
+        function newGame() {
+            // إعادة تعيين جميع المتغيرات
+            selectedTeam = null;
+            gameHistory = [];
+            teamCounts = { red: 0, blue: 0, green: 0, yellow: 0 };
+            protectedSquares = [];
+            bonusPoints = { red: 0, blue: 0, green: 0, yellow: 0 };
+            
+            // إعادة تعيين الشبكة
+            squares = [];
+            for (let i = 1; i <= 100; i++) {
+                squares.push({ team: null, number: i, isCenterSquare: false });
+            }
+            
+            if (gameMode === 'admin') {
+                document.querySelectorAll('#admin-screen .team-button').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                
+                document.body.classList.remove('team-background-red', 'team-background-blue', 'team-background-green', 'team-background-yellow');
+                
+                Object.keys(teamCounts).forEach(team => {
+                    document.getElementById(`admin-name-${team}`).value = '';
+                    document.getElementById(`admin-display-name-${team}`).textContent = getTeamDisplayName(team);
+                });
+                
+                document.getElementById('admin-selected-team').textContent = 'لم يتم اختيار فريق';
+                createAdminGrid();
+            }
+            
+            saveGameData();
+            alert('تم بدء لعبة جديدة! 🎮');
+        }
+
+        // وظائف المشرفين
+        function createSupervisorGrid() {
+            const grid = document.getElementById('supervisor-game-grid');
+            grid.innerHTML = '';
+            
+            if (squares.length === 0) {
+                squares = [];
+                for (let i = 1; i <= 100; i++) {
+                    squares.push({ team: null, number: i, isCenterSquare: false });
+                }
+            }
+            
+            for (let i = 1; i <= 100; i++) {
+                const square = document.createElement('div');
+                const index = i - 1;
+                const squareData = squares[index];
+                
+                if (squareData.team) {
+                    if (squareData.isCenterSquare) {
+                        square.className = `square ${teamColors[squareData.team]} border-4 border-yellow-400 rounded-lg flex items-center justify-center text-white font-bold text-sm center-square`;
+                    } else {
+                        square.className = `square ${teamColors[squareData.team]} border border-gray-300 rounded-lg flex items-center justify-center text-white font-bold text-sm`;
+                    }
+                } else {
+                    square.className = 'square bg-gray-600 border border-gray-500 rounded-lg flex items-center justify-center text-white font-bold text-sm';
+                }
+                
+                square.textContent = i;
+                squares[index].element = square;
+                
+                grid.appendChild(square);
+            }
+        }
+
+        function updateSupervisorCounters() {
+            Object.keys(teamCounts).forEach(team => {
+                const baseCount = teamCounts[team];
+                const bonus = bonusPoints[team] || 0;
+                const finalCount = baseCount + bonus; // إزالة Math.max للسماح بالنقاط السالبة
+                
+                // تحديث العرض الأساسي
+                document.getElementById(`supervisor-display-${team}`).textContent = `${baseCount} مربع`;
+                
+                // تحديث النقاط النهائية مع إظهار السالب
+                const countElement = document.getElementById(`supervisor-count-${team}`);
+                countElement.textContent = `${getTeamDisplayName(team)}: ${finalCount} نقطة نهائية`;
+                
+                // تغيير لون النص إذا كانت النقاط سالبة
+                if (finalCount < 0) {
+                    countElement.classList.add('text-red-800', 'font-bold');
+                } else {
+                    countElement.classList.remove('text-red-800', 'font-bold');
+                }
+            });
+        }
+
+        function addPoints(team) {
+            const pointsInput = document.getElementById(`points-${team}`);
+            const pointsValue = parseInt(pointsInput.value) || 0;
+            
+            if (pointsValue <= 0) {
+                alert('يرجى إدخال رقم صحيح أكبر من 0');
+                return;
+            }
+            
+            bonusPoints[team] = (bonusPoints[team] || 0) + pointsValue;
+            pointsInput.value = '';
+            updateSupervisorCounters();
+            saveGameData();
+            
+            alert(`تم إضافة ${pointsValue} نقطة إلى ${getTeamDisplayName(team)} ✅`);
+        }
+
+        function subtractPoints(team) {
+            const pointsInput = document.getElementById(`points-${team}`);
+            const pointsValue = parseInt(pointsInput.value) || 0;
+            
+            if (pointsValue <= 0) {
+                alert('يرجى إدخال رقم صحيح أكبر من 0');
+                return;
+            }
+            
+            bonusPoints[team] = (bonusPoints[team] || 0) - pointsValue;
+            pointsInput.value = '';
+            updateSupervisorCounters();
+            saveGameData();
+            
+            alert(`تم خصم ${pointsValue} نقطة من ${getTeamDisplayName(team)} ⚠️`);
+        }
+
+        // وظائف المتسابقين
+        function verifyTeamCode() {
+            const enteredCode = document.getElementById('team-code-input').value.trim();
+            const errorDiv = document.getElementById('code-error');
+            
+            if (!enteredCode) {
+                errorDiv.textContent = 'يرجى إدخال كود الفريق';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            let foundTeam = null;
+            Object.keys(teamCodes).forEach(team => {
+                if (teamCodes[team] === enteredCode) {
+                    foundTeam = team;
+                }
+            });
+            
+            if (!foundTeam) {
+                errorDiv.textContent = 'كود غير صحيح! يرجى المحاولة مرة أخرى.';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            contestantTeam = foundTeam;
+            errorDiv.classList.add('hidden');
+            document.getElementById('code-entry').classList.add('hidden');
+            document.getElementById('contestant-game').classList.remove('hidden');
+            
+            setupContestantInterface();
+        }
+
+        function setupContestantInterface() {
+            const teamInfo = document.getElementById('contestant-team-info');
+            const teamButton = document.getElementById('contestant-team-button');
+            
+            teamInfo.textContent = `مرحباً بك في ${getTeamDisplayName(contestantTeam)}!`;
+            teamInfo.className = `text-2xl font-bold text-center text-${contestantTeam}-600`;
+            
+            teamButton.innerHTML = `
+                <button class="team-button w-full bg-${contestantTeam}-600 text-white font-bold py-4 px-6 rounded-xl text-lg">
+                    ${getTeamDisplayName(contestantTeam)}
+                </button>
+            `;
+            
+            createContestantGrid();
+            updateContestantCounter();
+        }
+
+        function createContestantGrid() {
+            const grid = document.getElementById('contestant-game-grid');
+            grid.innerHTML = '';
+            
+            if (squares.length === 0) {
+                squares = [];
+                for (let i = 1; i <= 100; i++) {
+                    squares.push({ team: null, number: i, isCenterSquare: false });
+                }
+            }
+            
+            for (let i = 1; i <= 100; i++) {
+                const square = document.createElement('div');
+                const index = i - 1;
+                const squareData = squares[index];
+                
+                if (squareData.team) {
+                    if (squareData.isCenterSquare) {
+                        square.className = `square ${teamColors[squareData.team]} border-4 border-yellow-400 rounded-lg flex items-center justify-center text-white font-bold text-sm center-square`;
+                    } else {
+                        square.className = `square ${teamColors[squareData.team]} border border-gray-300 rounded-lg flex items-center justify-center text-white font-bold text-sm hover:brightness-110`;
+                    }
+                } else {
+                    square.className = 'square bg-gray-600 border border-gray-500 rounded-lg flex items-center justify-center text-white font-bold text-sm hover:bg-gray-500';
+                }
+                
+                square.textContent = i;
+                square.onclick = () => contestantPlayMove(index);
+                squares[index].element = square;
+                
+                grid.appendChild(square);
+            }
+        }
+
+        function contestantPlayMove(squareIndex) {
+            if (!contestantTeam) return;
+            
+            const originalSelectedTeam = selectedTeam;
+            selectedTeam = contestantTeam;
+            
+            playMove(squareIndex);
+            updateContestantCounter();
+        }
+
+        function updateContestantCounter() {
+            if (!contestantTeam) return;
+            
+            const teamCount = document.getElementById('contestant-team-count');
+            teamCount.textContent = `${teamCounts[contestantTeam]} مربع`;
+            teamCount.className = `text-lg font-semibold text-center text-${contestantTeam}-600`;
+        }
+
+        // وظائف تحديث الشبكة
+        function updateSupervisorGrid() {
+            if (!squares.length) return;
+            
+            const grid = document.getElementById('supervisor-game-grid');
+            if (!grid) return;
+            
+            const squareElements = grid.children;
+            for (let i = 0; i < squares.length && i < squareElements.length; i++) {
+                const square = squares[i];
+                const element = squareElements[i];
+                
+                if (square.team) {
+                    if (square.isCenterSquare) {
+                        element.className = `square ${teamColors[square.team]} border-4 border-yellow-400 rounded-lg flex items-center justify-center text-white font-bold text-sm center-square`;
+                    } else {
+                        element.className = `square ${teamColors[square.team]} border border-gray-300 rounded-lg flex items-center justify-center text-white font-bold text-sm`;
+                    }
+                } else {
+                    element.className = 'square bg-gray-600 border border-gray-500 rounded-lg flex items-center justify-center text-white font-bold text-sm';
+                }
+            }
+        }
+
+        function updateContestantGrid() {
+            if (!squares.length) return;
+            
+            const grid = document.getElementById('contestant-game-grid');
+            if (!grid) return;
+            
+            const squareElements = grid.children;
+            for (let i = 0; i < squares.length && i < squareElements.length; i++) {
+                const square = squares[i];
+                const element = squareElements[i];
+                
+                if (square.team) {
+                    if (square.isCenterSquare) {
+                        element.className = `square ${teamColors[square.team]} border-4 border-yellow-400 rounded-lg flex items-center justify-center text-white font-bold text-sm center-square`;
+                    } else {
+                        element.className = `square ${teamColors[square.team]} border border-gray-300 rounded-lg flex items-center justify-center text-white font-bold text-sm hover:brightness-110`;
+                    }
+                } else {
+                    element.className = 'square bg-gray-600 border border-gray-500 rounded-lg flex items-center justify-center text-white font-bold text-sm hover:bg-gray-500';
+                }
+            }
+        }
+
+        function updateAdminGrid() {
+            if (!squares.length) return;
+            
+            const grid = document.getElementById('admin-game-grid');
+            if (!grid) return;
+            
+            const squareElements = grid.children;
+            for (let i = 0; i < squares.length && i < squareElements.length; i++) {
+                const square = squares[i];
+                const element = squareElements[i];
+                
+                if (square.team) {
+                    if (square.isCenterSquare) {
+                        element.className = `square ${teamColors[square.team]} border-4 border-yellow-400 rounded-lg flex items-center justify-center text-white font-bold text-sm center-square`;
+                    } else {
+                        element.className = `square ${teamColors[square.team]} border border-gray-300 rounded-lg flex items-center justify-center text-white font-bold text-sm hover:brightness-110`;
+                    }
+                } else {
+                    element.className = 'square bg-gray-600 border border-gray-500 rounded-lg flex items-center justify-center text-white font-bold text-sm hover:bg-gray-500';
+                }
+            }
+        }
+
+        // تحديث البيانات كل ثانية للمزامنة
+        setInterval(() => {
+            if (gameMode !== 'single' && sessionId) {
+                syncGameData();
+            }
+        }, 1000);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96e3753a77752cfb',t:'MTc1NTAzODI1My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
